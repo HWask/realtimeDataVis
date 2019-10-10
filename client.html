@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!-- Client connecting to the server, receiving data in realtime from the server
+and plotting it using plotlylib. -->
+<html>
+<head>
+    <title></title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.49.5/plotly.min.js"></script>
+</head>
+<body>
+	<div id="graph"></div>
+	<script>
+		let data=[];
+		let timestamps=[];
+		let maxPoints = 30;
+		
+		let layout = {
+			title: "Math.random()",
+			xaxis: {
+				type:"date",
+				title: "Zeit",
+				tickformat:"%H:%M:%S",
+				showgrid: false,
+				zeroline: false
+			},
+			yaxis: {
+				fixedrange:true,
+				range:[0,1]
+			}
+		};
+		Plotly.plot("graph", [{
+			x:timestamps,
+			y: data,
+			mode: "lines",
+			line: {color: "#80CAF6"}
+		}], layout);
+		
+		let socket=io.connect("http://localhost:420");
+		socket.on("connect",()=>{
+			console.log("Connected...");
+		});
+		
+		socket.on("disconnect",()=>{
+			console.log("Disconncted...");
+		});
+		
+		socket.on("message",(msg)=>{
+			console.log(msg);
+			
+			if(data.length == maxPoints) {
+				data.splice(0,1);
+				timestamps.splice(0,1);
+			}
+			
+			data.push(msg);
+			timestamps.push(new Date());
+			Plotly.update("graph",{
+				x:[timestamps],
+				y:[data]
+			}); 
+		});
+	</script>
+</body>
+</html>
